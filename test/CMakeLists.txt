@@ -59,7 +59,9 @@ if(MPARK_VARIANT_INCLUDE_MPARK_TESTS)
     mod
     relops
     swap
-    visit)
+    visit
+    unsafe_get
+    unsafe_visit)
 
   foreach(test ${MPARK_TESTS})
     add_executable(${test} ${test}.cpp)

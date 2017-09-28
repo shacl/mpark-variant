@@ -1532,6 +1532,10 @@ namespace mpark {
       AUTO_REFREF_RETURN(generic_get_impl<I, V>(
           holds_alternative<I>(v) ? 0 : (throw_bad_variant_access(), 0))(
           lib::forward<V>(v)))
+
+    template <std::size_t I, typename V>
+    inline constexpr AUTO_REFREF generic_unsafe_get(V &&v)
+        AUTO_REFREF_RETURN(generic_get_impl<I, V>(0)(lib::forward<V>(v)))
   }  // namespace detail
 
   template <std::size_t I, typename... Ts>
@@ -1578,6 +1582,54 @@ namespace mpark {
     return get<detail::find_index_checked<T, Ts...>::value>(lib::move(v));
   }
 
+  namespace unsafe {
+    template <std::size_t I, typename... Ts>
+    inline constexpr variant_alternative_t<I, variant<Ts...>> &get(
+        variant<Ts...> &v) {
+      return detail::generic_unsafe_get<I>(v);
+    }
+
+    template <std::size_t I, typename... Ts>
+    inline constexpr variant_alternative_t<I, variant<Ts...>> &&get(
+        variant<Ts...> &&v) {
+      return detail::generic_unsafe_get<I>(lib::move(v));
+    }
+
+    template <std::size_t I, typename... Ts>
+    inline constexpr const variant_alternative_t<I, variant<Ts...>> &get(
+        const variant<Ts...> &v) {
+      return detail::generic_unsafe_get<I>(v);
+    }
+
+    template <std::size_t I, typename... Ts>
+    inline constexpr const variant_alternative_t<I, variant<Ts...>> &&get(
+        const variant<Ts...> &&v) {
+      return detail::generic_unsafe_get<I>(lib::move(v));
+    }
+
+    template <typename T, typename... Ts>
+    inline constexpr T &get(variant<Ts...> &v) {
+      return unsafe::get<detail::find_index_checked<T, Ts...>::value>(v);
+    }
+
+    template <typename T, typename... Ts>
+    inline constexpr T &&get(variant<Ts...> &&v) {
+      return unsafe::get<detail::find_index_checked<T, Ts...>::value>(
+          lib::move(v));
+    }
+
+    template <typename T, typename... Ts>
+    inline constexpr const T &get(const variant<Ts...> &v) {
+      return unsafe::get<detail::find_index_checked<T, Ts...>::value>(v);
+    }
+
+    template <typename T, typename... Ts>
+    inline constexpr const T &&get(const variant<Ts...> &&v) {
+      return unsafe::get<detail::find_index_checked<T, Ts...>::value>(
+          lib::move(v));
+    }
+  }  // namespace unsafe
+
   namespace detail {
 
     template <std::size_t I, typename V>
@@ -1585,6 +1637,11 @@ namespace mpark {
       AUTO_RETURN(v && holds_alternative<I>(*v)
                       ? lib::addressof(access::variant::get_alt<I>(*v).value)
                       : nullptr)
+
+    template <std::size_t I, typename V>
+    inline constexpr /* auto * */ AUTO generic_unsafe_get_if(V *v) noexcept
+      AUTO_RETURN(v ? lib::addressof(access::variant::get_alt<I>(*v).value)
+                    : nullptr)
 
   }  // namespace detail
 
@@ -1612,6 +1669,33 @@ namespace mpark {
   get_if(const variant<Ts...> *v) noexcept {
     return get_if<detail::find_index_checked<T, Ts...>::value>(v);
   }
+
+  namespace unsafe {
+    template <std::size_t I, typename... Ts>
+    inline constexpr lib::add_pointer_t<
+        variant_alternative_t<I, variant<Ts...>>>
+    get_if(variant<Ts...> *v) noexcept {
+      return detail::generic_unsafe_get_if<I>(v);
+    }
+
+    template <std::size_t I, typename... Ts>
+    inline constexpr lib::add_pointer_t<
+        const variant_alternative_t<I, variant<Ts...>>>
+    get_if(const variant<Ts...> *v) noexcept {
+      return detail::generic_unsafe_get_if<I>(v);
+    }
+
+    template <typename T, typename... Ts>
+    inline constexpr lib::add_pointer_t<T> get_if(variant<Ts...> *v) noexcept {
+      return unsafe::get_if<detail::find_index_checked<T, Ts...>::value>(v);
+    }
+
+    template <typename T, typename... Ts>
+    inline constexpr lib::add_pointer_t<const T> get_if(
+        const variant<Ts...> *v) noexcept {
+      return unsafe::get_if<detail::find_index_checked<T, Ts...>::value>(v);
+    }
+  }  // namespace unsafe
 
   template <typename... Ts>
   inline constexpr bool operator==(const variant<Ts...> &lhs,
@@ -1798,6 +1882,14 @@ namespace mpark {
         detail::visitation::variant::visit_value(lib::forward<Visitor>(visitor),
                                                  lib::forward<Vs>(vs)...))
 #endif
+
+  namespace unsafe {
+    template <typename Visitor, typename... Vs>
+    inline constexpr decltype(auto) visit(Visitor &&visitor, Vs &&... vs) {
+      return detail::visitation::variant::visit_value(
+          lib::forward<Visitor>(visitor), lib::forward<Vs>(vs)...);
+    }
+  }  // namespace unsafe
 
   template <typename... Ts>
   inline auto swap(variant<Ts...> &lhs,
