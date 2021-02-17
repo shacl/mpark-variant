@@ -7,6 +7,11 @@
 
 cmake_minimum_required(VERSION 3.6.3)
 
+set(subproject OFF)
+if(DEFINED PROJECT_NAME)
+  set(subproject ON)
+endif()
+
 project(MPark.Variant VERSION 1.4.1 LANGUAGES CXX)
 
 # Option.
@@ -39,20 +44,22 @@ export(
   FILE "${CMAKE_CURRENT_BINARY_DIR}/cmake/mpark_variant-targets.cmake")
 
 # Install.
-install(TARGETS mpark_variant EXPORT mpark_variant)
+if(NOT subproject)
+  install(TARGETS mpark_variant EXPORT mpark_variant)
 
-install(
-  EXPORT mpark_variant
-  FILE mpark_variant-targets.cmake
-  DESTINATION lib/cmake/mpark_variant)
+  install(
+    EXPORT mpark_variant
+    FILE mpark_variant-targets.cmake
+    DESTINATION lib/cmake/mpark_variant)
 
-install(DIRECTORY include/mpark DESTINATION include)
+  install(DIRECTORY include/mpark DESTINATION include)
 
-install(
-  FILES
-  "${CMAKE_CURRENT_BINARY_DIR}/cmake/mpark_variant-config.cmake"
-  "${CMAKE_CURRENT_BINARY_DIR}/cmake/mpark_variant-config-version.cmake"
-  DESTINATION lib/cmake/mpark_variant)
+  install(
+    FILES
+    "${CMAKE_CURRENT_BINARY_DIR}/cmake/mpark_variant-config.cmake"
+    "${CMAKE_CURRENT_BINARY_DIR}/cmake/mpark_variant-config-version.cmake"
+    DESTINATION lib/cmake/mpark_variant)
+endif()
 
 # Test.
 list(REMOVE_DUPLICATES MPARK_VARIANT_INCLUDE_TESTS)
